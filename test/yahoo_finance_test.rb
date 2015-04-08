@@ -27,13 +27,23 @@ class TestYahoo_finance_test < Test::Unit::TestCase
     end
   end
 
-  def test_historical_quote_returns_nil_when_no_data_available
-    assert_nil do
-      YahooFinance.historical_quotes("RDSA.NX",
-                                     Date.today - 7,
-                                     Date.today,
-                                     { :period => :daily,
-                                       :raw => false })
+  def test_historical_quote_returns_empty_array_when_no_data_available
+    quote = YahooFinance.historical_quotes("RDSA.NX",
+                                           Date.today - 7,
+                                           Date.today,
+                                           { :period => :daily,
+                                             :raw => false })
+    assert_empty(quote)
+  end
+
+  def test_historical_quote
+    quote = YahooFinance.historical_quotes("AAPL",
+                                           Date.today - 7,
+                                           Date.today,
+                                           { :period => :daily,
+                                             :raw => false })
+    assert_nothing_raised do 
+      quote.first.open
     end
   end
 
