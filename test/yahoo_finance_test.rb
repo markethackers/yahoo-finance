@@ -6,7 +6,7 @@ class TestYahoo_finance_test < Test::Unit::TestCase
   def test_quotes
     quotes = YahooFinance.quotes(["BVSP", "AAPL"])
     assert_equal(2, quotes.size)
-    
+
     assert_nothing_raised do
       q = YahooFinance.historical_quotes("MSFT", Time::now-(24*60*60*40), Time::now, { :raw => false, :period => :daily })
       [:trade_date, :open, :high, :low, :close, :volume, :adjusted_close].each do |col|
@@ -15,15 +15,25 @@ class TestYahoo_finance_test < Test::Unit::TestCase
     end
 
     assert_nothing_raised do
-     q = YahooFinance.historical_quotes("MSFT", Time::now-(24*60*60*400), Time::now, { :raw => false, :period => :dividends_only })
-     assert q.first.dividend_pay_date
-     assert q.first.dividend_yield
+      q = YahooFinance.historical_quotes("MSFT", Time::now-(24*60*60*400), Time::now, { :raw => false, :period => :dividends_only })
+      assert q.first.dividend_pay_date
+      assert q.first.dividend_yield
     end
-     
+
     assert_nothing_raised do
       YahooFinance.quotes(["AAPL", "MSFT", "BVSP", "JPYUSD" ],
                           YahooFinance::COLUMNS.take(20).collect { |k, v| v },
                           { raw: false })
+    end
+  end
+
+  def test_historical_quote_returns_nil_when_no_data_available
+    assert_nil do
+      YahooFinance.historical_quotes("RDSA.NX",
+                                     Date.today - 7,
+                                     Date.today,
+                                     { :period => :daily,
+                                       :raw => false })
     end
   end
 
@@ -35,7 +45,7 @@ class TestYahoo_finance_test < Test::Unit::TestCase
       YahooFinance.historical_quotes("^AXJO", Time::now-(24*60*60*400), Time::now)
     end
   end
-  
+
   def test_recognizes_csv_strings
     quotes = YahooFinance.quotes(["GOOG"], [:name])
     assert_no_match /^\"/, quotes.first.name
