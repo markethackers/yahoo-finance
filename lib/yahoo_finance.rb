@@ -188,7 +188,8 @@ class YahooFinance
   def self.read_symbols(query)
     conn = open("http://d.yimg.com/autoc.finance.yahoo.com/autoc?query=#{query}&region=US&lang=en-US&callback=YAHOO.Finance.SymbolSuggest.ssCallback")
     result = conn.read
-    result.sub!('YAHOO.Finance.SymbolSuggest.ssCallback(', '').chomp!.chomp!(')\;')
+    result.sub!('YAHOO.Finance.SymbolSuggest.ssCallback(', '').chomp!
+      result.chomp!(')\;')
     json_result = JSON.parse(result)
     json_result["ResultSet"]["Result"]
   end
