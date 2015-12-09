@@ -38,8 +38,8 @@ class YahooFinance
     :error_indicator => "e1",
     :eps_estimate_current_year => "e7",
     :eps_estimate_next_year => "e8",
-    :eps_estimate_next_quarter => "e9", 
-    :float_shares => "f6", 
+    :eps_estimate_next_quarter => "e9",
+    :float_shares => "f6",
     :low => "g",
     :high => "h",
     :low_52_weeks => "j",
@@ -50,9 +50,9 @@ class YahooFinance
     :holdings_gain_percent_realtime => "g5",
     :holdings_gain_realtime => "g6",
     :more_info => "i",
-    :order_book => "i5", 
+    :order_book => "i5",
     :market_capitalization => "j1",
-    :market_cap_realtime => "j3", 
+    :market_cap_realtime => "j3",
     :ebitda => "j4",
     :change_From_52_week_low => "j5",
     :percent_change_from_52_week_low => "j6",
@@ -165,7 +165,7 @@ class YahooFinance
   def self.read_historical(symbol, start_date, end_date, options, retry_on_error = true)
     url = "http://ichart.finance.yahoo.com/table.csv?s=#{URI.escape(symbol)}&d=#{end_date.month-1}&e=#{end_date.day}&f=#{end_date.year}&g=#{HISTORICAL_MODES[options[:period]]}&a=#{start_date.month-1}&b=#{start_date.day}&c=#{start_date.year}&ignore=.csv"
     result = ''
-    begin 
+    begin
       open(url) do |conn|
         cols =
           if options[:period] == :dividends_only
@@ -186,9 +186,9 @@ class YahooFinance
   end
 
   def self.read_symbols(query)
-    conn = open("http://d.yimg.com/autoc.finance.yahoo.com/autoc?query=#{query}&callback=YAHOO.Finance.SymbolSuggest.ssCallback")
+    conn = open("http://d.yimg.com/autoc.finance.yahoo.com/autoc?query=#{query}&region=US&lang=en-US&callback=YAHOO.Finance.SymbolSuggest.ssCallback")
     result = conn.read
-    result.sub!('YAHOO.Finance.SymbolSuggest.ssCallback(', '').chomp!(')')
+    result.sub!('YAHOO.Finance.SymbolSuggest.ssCallback(', '').chomp!(')\;')
     json_result = JSON.parse(result)
     json_result["ResultSet"]["Result"]
   end
