@@ -1,5 +1,5 @@
 source 'https://rubygems.org'
 
-gem 'rake', '~> 0.9.0'
+gem 'rake'
 gem 'bundler'
 gem 'json'
