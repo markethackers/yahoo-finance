@@ -17,8 +17,23 @@ module YahooFinance
     include YahooFinance::Historical
     include YahooFinance::Symbols
 
+    attr_accessor :opts
+
+    def initialize(opts)
+      super()
+
+      @opts = opts
+    end
+
     def http_client
-      @http_client ||= HTTPClient.new
+      @http_client ||=begin
+                        if @opts.empty?
+                          HTTPClient.new
+                        else
+                          HTTPClient.new(@opts[:proxy])
+                        end
+      end
+
     end
   end
 end
