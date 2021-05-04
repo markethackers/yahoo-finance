@@ -6,23 +6,31 @@ module YahooFinance
       base.extend(self)
     end
 
+    HEADERS  = {
+      "User-Agent" => "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:84.0) Gecko/20100101 Firefox/84.0",
+      "Accept" => "application/json",
+    }
+
     MARKETS = OpenStruct.new(
       us: OpenStruct.new(
         nasdaq: OpenStruct.new(
-          url: "http://www.nasdaq.com/screening/companies-by-name.aspx?letter=0&exchange=nasdaq&render=download"),
+          url: "https://api.nasdaq.com/api/screener/stocks?tableonly=true&limit=10000&offset=0&exchange=nasdaq&download=true"),
         nyse: OpenStruct.new(
-          url: "http://www.nasdaq.com/screening/companies-by-name.aspx?letter=0&exchange=nyse&render=download"),
+          url: "https://api.nasdaq.com/api/screener/stocks?tableonly=true&limit=10000&offset=0&exchange=nyse&download=true"),
         amex: OpenStruct.new(
-          url: "http://www.nasdaq.com/screening/companies-by-name.aspx?letter=0&exchange=amex&render=download")))
+          url: "https://api.nasdaq.com/api/screener/stocks?tableonly=true&limit=10000&offset=0&exchange=amex&download=true")))
 
     MARKET_NAMES = %w[nyse nasdaq amex]
 
-    Company = Struct.new(:symbol, :name, :last_sale, :market_cap, :ipo_year, :sector, :industry, :summary_quote, :market)
-    Sector = Struct.new(:name)
+    Company  = Struct.new(:symbol, :name, :last_sale, :market_cap, :ipo_year, :sector, :industry, :summary_quote, :market)
+    Sector   = Struct.new(:name)
     Industry = Struct.new(:sector, :name)
 
     def map_company(row, market)
-      Company.new(row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7], market)
+      Company.new(row["symbol"],   row["name"],
+                  row["lastsale"], row["marketcap"],
+                  row["ipoyear"],  row["sector"],
+                  row["industry"], row["url"], market)
     end
 
     def companies(country, markets = MARKET_NAMES)
@@ -40,13 +48,19 @@ module YahooFinance
         companies = []
         next unless MARKETS[country][market]
 
-        response = http_client.get(MARKETS[country][market].url)
-        fail YahooFinance::HttpRequestError.new(response.code, reponse.body) unless response.code == 200
+        response = http_client.get(MARKETS[country][market].url, nil, HEADERS)
 
-        CSV.parse(response.body) do |row|
-          next if row.first == "Symbol"
+        json = JSON.parse(response.body)
+        rows = json["data"]["rows"]
+
+        if response.code != 200 || rows.blank?
+          fail YahooFinance::HttpRequestError.new(response.code, reponse.body)
+        end
+
+        rows.each do |row|
           companies << map_company(row, market)
         end
+
         h[market] = companies
         h
       end
@@ -61,18 +75,9 @@ module YahooFinance
     end
 
     def symbols_by_market(country, market)
-      symbols = []
-      market = MARKETS.send(country).send(market)
-      return symbols if market.nil?
-      response = http_client.get(market.url)
+      companies = companies_by_market(country, market)
 
-      fail YahooFinance::HttpRequestError.new(response.code, reponse.body) unless response.code == 200
-
-      CSV.parse(response.body) do |row|
-        next if row.first == "Symbol"
-        symbols.push(row.first.gsub(" ", ""))
-      end
-      symbols
+      companies.collect{|company| company.symbol}.uniq
     end
   end
 end

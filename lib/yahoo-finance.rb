@@ -19,21 +19,14 @@ module YahooFinance
 
     attr_accessor :opts
 
-    def initialize(opts)
+    def initialize(opts = {})
       super()
 
       @opts = opts
     end
 
     def http_client
-      @http_client ||=begin
-                        if @opts.empty?
-                          HTTPClient.new
-                        else
-                          HTTPClient.new(@opts[:proxy])
-                        end
-      end
-
+      @http_client||=@opts.empty? ? HTTPClient.new : HTTPClient.new(@opts[:proxy])
     end
   end
 end
